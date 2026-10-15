@@ -21,8 +21,8 @@ barcos1 = [[1, 4], [2, 3], [3, 2], [4, 1]]
 # Jugador 2 (máquina): 
 barcos2 = [[1, 4], [2, 3], [3, 2], [4, 1]]
 
-# Holgura entre barcos. Si vale 0, los barcos se pueden colocar sin ninguna separación 
-# (casilla libre) entre ellos. Si vale 1, tiene que haber al menos una casilla libre 
-# entre distintos barcos. 
-holg1 = 1  # Jugador 1 (humano) 
-holg2 = 1  # Jugador 2 (máquina) 
+# Separación mínima entre barcos. Si vale 0, los barcos se pueden colocar sin ninguna 
+# separación (casilla libre) entre ellos. Si vale 1, tiene que haber al menos una 
+# casilla libre entre distintos barcos. 
+sep1 = 1  # Jugador 1 (humano) 
+sep2 = 1  # Jugador 2 (máquina) 
