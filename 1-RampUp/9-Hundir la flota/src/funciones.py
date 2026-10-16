@@ -290,4 +290,5 @@ def viables(tablero, eslora, ori, sep):
 #     - Función colocar_barco: añadir como salida los índices de las casillas de separación alrededor del barco. **HECHO. 
 #     - Función disparar: añadir como salida booleano que indique si un barco acertado se ha hundido. **HECHO. 
 #     - Función genérica para pedir y validar input de usuario. 
+#     - Función para colocar todos los barcos. 
 #     - ¿Crear funciones para pasar índices de 2D a 1D y viceversa? 
