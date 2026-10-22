@@ -27,10 +27,17 @@ lsts_sep = [None, None]
 
 for i in range(2):
     tableros[i] = inic_tablero(str_ini[i], ncol[i], nfil[i])
-    print(f'\n-HLF-: \nTablero {i} ({noms_jug[i]}) vacío: \n')
-    pprint.pprint(tableros[i])
-### Graficar 
-
+    print(f'\n-HLF-: \nTablero {i+1} ({noms_jug[i]}) vacío: \n')
+    # pprint.pprint(tableros[i])
+    impr_tablero(tableros[i])
+# Graficado con matplotlib 
+if b_shw_png == True:
+    ax_titles = ['', '']
+    vds_bar = [[0 for j in range(n_barcos[i])] for i in range(2)]
+    for i in range(2):
+        ax_titles[i] = f'Tablero de {noms_jug[i]} vacío'
+    f_title = 'Inicialización de tableros'
+    graf_tableros(tableros, mostrar_barcos, esloras, vds_bar, v_strs, v_colores_rgba, ax_titles, f_title)
 
 ## Colocación de barcos en tableros 
 caben = [False, False]
@@ -51,12 +58,14 @@ while caben[0] == False or caben[1] == False or opc_slc == opc_colocar:
         #Segundo tablero 
         print(f'\n-HLF-: \nColocando barcos en tablero 2 ({noms_jug[1]})... \n')
         caben[1], tableros[1], lsts_sep[1] = rep_colocar_barcos(str_ini[1], ncol[1], nfil[1], esloras[1], seps[1], strs_ocup, maxint_colocar)
+        time.sleep(0.5)
         if caben[1] == False:
             print(f'\n-HLF-: \nERROR: no se han podido colocar todos los barcos en el segundo tablero, de {noms_jug[1]}. \n')
         else:
             if modo_juego == 'demo':
                 print(f'\n-HLF-: \n[Modo demo] Tablero 2 ({noms_jug[1]}) con los barcos: \n')
-                pprint.pprint(tableros[1])
+                # pprint.pprint(tableros[1])
+                impr_tablero(tableros[1])
             # Primer tablero
             print(f'\n-HLF-: \nColocando barcos en tablero 1 ({noms_jug[0]})... \n')
             if b_coloc_auto == True:
@@ -69,7 +78,15 @@ while caben[0] == False or caben[1] == False or opc_slc == opc_colocar:
                 print(f'\n-HLF-: \nERROR: no se han podido colocar todos los barcos en el primer tablero, de {noms_jug[0]}. \n')
             else:
                 print(f'\n-HLF-: \nTablero 1 ({noms_jug[0]}) con los barcos: \n')
-                pprint.pprint(tableros[0])
+                # pprint.pprint(tableros[0])
+                impr_tablero(tableros[0])
+                # Graficado con matplotlib 
+                if b_shw_png == True:
+                    ax_titles = ['', '']
+                    for i in range(2):
+                        ax_titles[i] = f'Tablero de {noms_jug[i]}'
+                    f_title = 'Tableros con los barcos colocados'
+                    graf_tableros(tableros, mostrar_barcos, esloras, vidas_barcos, v_strs, v_colores_rgba, ax_titles, f_title)
             
 
 ## Inicio del juego 
@@ -90,10 +107,20 @@ nju = 1
 while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
     ncels_no_descub = [len(cels_no_descub[0]), len(cels_no_descub[1])]
     print(f'\n-HLF-: \nJugada nº {nju}. \n')
+    print(f'\n-HLF-: \nA {noms_jug[0]} le quedan {vidas[0]} vidas y a {noms_jug[1]} {vidas[1]}.\n')
     print(f'\n-HLF-: \nTurno de {noms_jug[tur]}, disparando al tablero de {noms_jug[1-tur]}. \n')
     if modo_juego == 'demo' and tur == 0:
         print(f'\n-HLF-: \n[MODO DEMO] \n')
-    pprint.pprint(tableros_shw[1-tur])
+    # pprint.pprint(tableros_shw[1-tur])
+    impr_tablero(tableros_shw[1-tur])
+    # Graficado con matplotlib 
+    if b_shw_png == True:
+        ax_titles = ['', '']
+        for i in range(2):
+            ax_titles[i] = f'Tablero de {noms_jug[i]}. Quedan {vidas[i]} vidas'
+        f_title = f'Jugada nº {nju}. Turno de {noms_jug[tur]}, disparando al tablero de {noms_jug[1-tur]}'
+        graf_tableros(tableros_shw, mostrar_barcos, esloras, vidas_barcos, v_strs, v_colores_rgba, ax_titles, f_title)
+    
     # Pedir/obtener aleatoriamente coordenada de disparo 
     if tur == 0:
         # Pedir celda al usuario 
@@ -115,18 +142,27 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
                     print(f'\n-HLF-: \nATENCIÓN: La casilla seleccionada ya está descubierta. Dispara a una casilla no descubierta. ')
     elif tur == 1:
         # Seleccionar aleatoriamente celda entre las disponibles 
-        #### Pendiente calcular celdas probables si intelig_maq == True. 
         nint = 0
         tocado = False
         # La máquina sondea un máximo de nint_maq celdas en su turno, hasta que encuentra una con barco 
-        while tocado == False and nint in range(nint_maq):
-            ind = rnd.randint(0, ncels_no_descub[1-tur] - 1)
-            icel = cels_no_descub[1-tur][ind]
+        cels_no_descub_tmp = [e for e in cels_no_descub[1-tur]]
+        lst_probables_tmp = [e for e in lst_probables]
+        while tocado == False and nint in range(nint_maq) and len(cels_no_descub_tmp)>0.1:
+            if len(lst_probables_tmp) > 0.1:
+                icel = lst_probables_tmp[0]
+                del lst_probables_tmp[0]
+                if b_r_sond == True:
+                    del lst_probables[0]
+                cels_no_descub_tmp.remove(icel)
+            else:
+                ind = rnd.randint(0, len(cels_no_descub_tmp) - 1)
+                icel = cels_no_descub_tmp[ind]
+                cels_no_descub_tmp.remove(icel)
             x, y = ind_1d_a_2d(icel, ncol[1-tur])
             if tableros[1-tur][y][x][0] == s_barco:
                 tocado = True
             elif b_r_sond == True:
-                del cels_no_descub[1-tur][ind]
+                cels_no_descub[1-tur].remove(icel)
             nint += 1
     
     # Disparar, y actualizar variables de vidas y vidas_barcos, y celdas disponibles para disparar (no descubiertas). 
@@ -135,6 +171,8 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
     # Eliminar celda disparada de la lista de celdas disponibles para disparar 
     if icel in cels_no_descub[1-tur]:
         cels_no_descub[1-tur].remove(icel)
+    if icel in lst_probables:
+        lst_probables.remove(icel)
     disparos[tur] += 1
     tableros_shw[1-tur][y][x] = tableros[1-tur][y][x]
     
@@ -152,6 +190,8 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
                 # Actualizar celdas disponibles para disparar (no descubiertas), eliminando las reservadas para 
                 # separación mínima alrededor del barco hundido. Actualizar también tableros para graficar. 
                 cels_no_descub[1-tur] = [e for e in cels_no_descub[1-tur] if e not in lsts_sep[1-tur][id_barco]]
+                if intelig_maq == True and tur == 1 and len(lst_probables)>0.1:
+                    lst_probables = [c for c in lst_probables if c in cels_no_descub[1-tur]]
                 
                 tablero_np = np.array(tableros[1-tur])
                 tablero_shw_np = np.array(tableros_shw[1-tur])
@@ -164,6 +204,16 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
                 tableros[1-tur] = tablero_np.tolist()
         else:
             msg_rst_f = 'TOCADO \n'
+            if intelig_maq == True and tur == 1:
+                esl_res_2ym = [e for i, e in enumerate(esloras[1-tur]) if (e > 1.1) and (vidas_barcos[1-tur][i] > 0.1)]
+                esl_res_2ym_min = min(esl_res_2ym)
+                esl_res_2ym_max = max(esl_res_2ym)
+                icels_prio1, icels_prio2, icels_descar = intelig_disp(tableros[1-tur], icel, seps[1-tur], strs_descub, esl_res_2ym_min, esl_res_2ym_max)
+                icels_prio1_f = [e for e in icels_prio1 if e not in lst_probables]
+                icels_prio2_f = [e for e in icels_prio2 if e not in lst_probables]
+                lst_probables = [e for e in lst_probables if e not in icels_descar]
+                lst_probables = icels_prio1_f + lst_probables + icels_prio2_f
+                cels_no_descub[1-tur] = [e for e in cels_no_descub[1-tur] if e not in icels_descar]
     else:
         msg_rst_f = 'AGUA \n'
         # Pasar turno 
@@ -172,7 +222,21 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
             nju += 1
     
     print(msg_rst_i + msg_rst_f)
+    time.sleep(0.5)
     
     if vidas[1-tur] < 0.1:
+        print(f'\n-HLF-: \nTablero de {noms_jug[0]}, tras {disparos[1]} disparos de {noms_jug[1]}. \n')
+        # pprint.pprint(tableros[0])
+        impr_tablero(tableros[0])
+        print(f'\n-HLF-: \nTablero de {noms_jug[1]}, tras {disparos[0]} disparos de {noms_jug[0]}. \n')
+        # pprint.pprint(tableros[1])
+        impr_tablero(tableros[1])
         print(f'\n-HLF-: \n¡Ha ganado {noms_jug[tur]}! \nFIN DEL JUEGO \n')
+        # Graficado con matplotlib 
+        if b_shw_png == True:
+            ax_titles = ['', '']
+            for i in range(2):
+                ax_titles[i] = f'Tablero de {noms_jug[i]}, tras {disparos[1-i]} disparos de {noms_jug[1-i]}'
+            f_title = f'¡Ha ganado {noms_jug[tur]}! FIN DEL JUEGO'
+            graf_tableros(tableros, mostrar_barcos, esloras, vidas_barcos, v_strs, v_colores_rgba, ax_titles, f_title)
 

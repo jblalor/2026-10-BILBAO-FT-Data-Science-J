@@ -22,11 +22,11 @@ j_primero = 0
 
 # Dimensiones de los tableros 
 # Dimensiones del tablero del jugador 1 (humano): 
-ncol1 = 12  # Nº de columnas 
+ncol1 = 10  # Nº de columnas 
 nfil1 = 10  # Nº de filas 
 # Dimensiones del tablero del jugador 2 (máquina): 
-ncol2 = 9  # Nº de columnas 
-nfil2 = 8  # Nº de filas 
+ncol2 = 10  # Nº de columnas 
+nfil2 = 10  # Nº de filas 
 
 ncol = [ncol1, ncol2]
 nfil = [nfil1, nfil2]
@@ -60,7 +60,7 @@ b_coloc_auto = True
 #   - '1+', '2+', '3+': igual que los correspondientes niveles sin '+', haciendo más 
 #     inteligentes los disparos de la máquina. Disparará primero a las celdas adyacentes 
 #     a barcos tocados no hundidos. 
-nivel = '1+'
+nivel = '3+'
 if type(nivel) == int:
     nint_maq = nivel
     intelig_maq = False
@@ -133,6 +133,11 @@ s_tocado = strs_descub[0]
 s_agua = strs_descub[1]
 
 
+# Booleano que controla si se crean figuras con los dos tableros, además de las impresiones 
+# de los tableros que se muestran por pantalla. Si es True, se crean y se muestran las 
+# figuras con matplotlib, y se muestran sus pngs. 
+# Los siguientes parámetros se usan en la creación de las figuras. 
+b_shw_png = True
 # Colores para graficar los tableros, siendo el primero el correspondiente a las celdas vacías, 
 # y los siguientes a los elementos de las listas strs_ocup y strs_descub, por orden. 
 # Ver nomenclaturas admitidas en doc de matplotlib.colors. 
@@ -140,6 +145,10 @@ colores = ['ivory', 'grey', 'ivory', 'red', 'blue', 'cyan']  # Colores de las ce
 alfas = [0.9, 0.6, 0.9, 0.6, 0.5, 0.5]  # Nivel de opacidad de los colores de las celdas 
 colores_bordes = ['ivory', 'grey', 'ivory', 'red', 'blue', 'cyan']  # Colores de los bordes de las celdas 
 alfas_bordes = [0.99, 0.99, 0.99, 0.99, 0.99, 0.99]  # Nivel de opacidad de los colores de los bordes de las celdas 
+
+mostrar_barcos = [True, False]
+if modo_juego == 'demo':
+    mostrar_barcos[1] = True
 
 
 
@@ -158,9 +167,11 @@ vidas_barcos = [vidas_barcos1, vidas_barcos2]
 str_ini = [' ' * (1 + len(str(n_barcos[0]-1))), ' ' * (1 + len(str(n_barcos[0]-1)))]
 
 strs = [' '] + strs_ocup + strs_descub
+v_strs = [strs, strs]
 
 # Colores y alfas en formato RGBA 
 colores_rgba = [to_rgba(c, alpha=a) for c, a in zip(colores, alfas)]
+v_colores_rgba = [colores_rgba, colores_rgba]
 colores_bordes_rgba = [to_rgba(c, alpha=a) for c, a in zip(colores_bordes, alfas_bordes)]
 
 oris = ['h', 'v']

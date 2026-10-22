@@ -2,7 +2,7 @@
 
 # Funciones para HLF. 
 
-# $Version: 1 $, $Fecha: 2026-10-20 (mar, 20 oct 2026). Por Julio Blanco Lorenzo. 
+# $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
 
 
 # funciones: 
@@ -21,6 +21,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.colors import to_rgba
 from matplotlib.colors import ListedColormap
+import os
+import platform
+import subprocess
 
 
 def hov(s_hov):
@@ -155,6 +158,60 @@ def inic_tablero(stri, ncol, nfil):
     tablero = [[stri for i in range(ncol)] for j in range(nfil)]
     
     return tablero
+
+
+def impr_tablero(tablero):
+    """
+    Imprimir en pantalla un tablero 2D rectangular, incluyendo letras como 
+    etiquetas de columnas y nºs como etiquetas de filas. 
+    La primera celda estará identificada como A1. 
+    
+    Entradas: 
+       tablero: string con el que se inicializan todas las celdas del tablero. 
+             Tipo: str. 
+       ncol: nº de columnas del tablero. Entero positivo. 
+       nfil: nº de filas del tablero. Entero positivo. 
+    
+    Salidas: None 
+    
+    """
+    #
+    
+    # $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
+    
+    
+    nomfun = inspect.currentframe().f_code.co_name
+    
+    nfil = len(tablero)
+    ncol = len(tablero[0])
+    
+    nchr = len(tablero[0][0])
+    stri = ' ' * nchr
+    
+    tabl_impr = [[stri for i in range(ncol+2)] for j in range(nfil+2)]
+    
+    tabl_impr[0][1] = '|'.ljust(nchr)
+    for i in range(ncol):
+        tabl_impr[0][2+i] = chr(ord('A') + i).ljust(nchr)
+        tabl_impr[1][2+i] = '_'.ljust(nchr)
+    
+    tabl_impr[1][0] = '_'.ljust(nchr)
+    tabl_impr[1][1] = '_'.ljust(nchr)
+    
+    for j in range(nfil):
+        tabl_impr[j+2][0] = str(j + 1).ljust(nchr)
+        tabl_impr[j+2][1] = '|'.ljust(nchr)
+    
+    tabl_impr[0][1] = '|'.ljust(nchr)
+    tabl_impr[1][1] = '|'.ljust(nchr)
+    
+    for i in range(ncol):
+        for j in range(nfil):
+            tabl_impr[j+2][i+2] = tablero[j][i]
+    
+    pprint.pprint(tabl_impr)
+    
+    return None
 
 
 def pedir_celda(msg_in, ncol, nfil, opc_salir):
@@ -470,94 +527,6 @@ def viables(tablero, eslora, ori, sep, strs_ocup):
     return icel_ini_viab
 
 
-def colocar_barcos___(tablero, esloras, sep, strs_ocup):
-    """
-    Colocación aleatoria de varios barcos en un tablero (array 2D), si no hay interferencia 
-    con otros barcos o con los bordes del tablero. 
-    
-    Entradas: 
-       tablero: array 2D (lista de listas, siendo todas las listas anidadas de la misma longitud) 
-                con las posiciones donde hay barcos y las posiciones donde 
-                debe haber separación entre barcos marcadas. 
-                Debe contener strings en todas sus posiciones. 
-                Normalmente esta función se ejecutará dándole como entrada un tablero vacío. 
-       esloras: lista de longitud igual al nº de barcos a colocar en el tablero, con las esloras 
-                de todos los barcos. Cada elemento de la lista es un entero mayor que 0. 
-       sep: nº de casillas de separación mínima entre barcos. Entero positivo (incluyendo 0). 
-            Tipo: int. 
-       strs_ocup: lista de strings que marcan que una celda está ocupada. 
-                  Tiene que tener al menos 2 strings, cada uno de un único caracter: 
-                  el primero, el string que marca que hay barco, 
-                  y el segundo, el que marca que hay la separación necesaria entre barcos. 
-                  ATENCIÓN: si se quisiera usar esta función cuando ya se han hecho disparos 
-                     en el tablero, se debe incluir al menos un string adicional, con lo que se 
-                     imprime al acertar un disparo. 
-    
-    Salidas: 
-       caben: booleano que vale True si se han conseguido colocar todos los barcos de la lista 
-              de esloras. 
-       tablero: tablero actualizado con los nuevos barcos que se han podido colocar. Los barcos 
-                se colocan en el orden de la lista esloras, y si uno no se puede colocar, todos 
-                los posteriores de la lista tampoco se colocan. 
-       lsts_sep: Lista con la lista lst_sep que devuelve la función colocar_barco para cada barco 
-                 (ver descripción de lst_sep en doc de función colocar_barco). 
-    
-    """
-    #
-    
-    # $Version: 1 $, $Fecha: 2026-10-18 (dom, 18 oct 2026). Por Julio Blanco Lorenzo. 
-    
-    
-    nomfun = inspect.currentframe().f_code.co_name
-    
-    caben = True
-    
-    oris = ['h', 'v']
-    
-    nfil = len(tablero)
-    ncol = len(tablero[0])
-    
-    n_barcos = len(esloras)
-    lsts_sep = [[] for i in range(n_barcos)]
-    
-    id_barco = 0
-    while caben == True and id_barco in range(n_barcos):
-        eslora = esloras[id_barco]
-        # Obtener aleatoriamente la orientación del nuevo barco 
-        i_hov = rnd.randint(0, 1)
-        ori = oris[i_hov]
-        # Lista de celdas viables como celda inicial del nuevo barco 
-        icel_i_viab = viables(tablero, eslora, ori, sep, strs_ocup)
-        if len(icel_i_viab) < 0.1:
-            # Si no hay celdas viables con esa orientación, se prueba con la otra 
-            i_hov = 1 - i_hov
-            ori = oris[i_hov]
-            icel_i_viab = viables(tablero, eslora, ori, sep, strs_ocup)
-        if len(icel_i_viab) < 0.1:
-            caben = False
-            print(f'\n-{nomfun}-: \nATENCIÓN: No cabe en el tablero el barco con ID {id_barco} (eslora={eslora}). \n')
-        else:
-            # Seleccionar aleatoriamente celda inicial del nuevo barco entre las viables 
-            icel_i = icel_i_viab[rnd.randint(0, len(icel_i_viab)-1)]
-            # Colocar el nuevo barco 
-            cabe_b, tablero, lst_sep_b = colocar_barco(tablero, id_barco, eslora, ori, icel_i, sep, strs_ocup)
-            xi, yi = ind_1d_a_2d(icel_i, ncol)
-            if cabe_b == False:
-                caben = False
-                print(f'\n-{nomfun}-: \nERROR: No se ha podido colocar el barco con ID {id_barco} (eslora={eslora}). \
-                        \n   con orientación {ori} empezando en la casilla {chr(ord("A") + xi) + str(yi+1)}, supuestamente viable. \
-                        \n   Revisar código. \n')
-            else:
-                lsts_sep[id_barco] = lst_sep_b
-            id_barco += 1
-        if caben == False:
-            print(f'\n-{nomfun}-: \nTablero con los barcos anteriores colocados: ')
-            pprint.pprint(tablero)
-            print()
-    
-    return caben, tablero, lsts_sep
-
-
 def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opcs=None, opc_reiniciar=None, opc_salir=None):
     """
     Colocación aleatoria o manual de varios barcos en un tablero (array 2D), si no hay interferencia 
@@ -585,7 +554,7 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
           - 'man': se colocan los barcos manualmente, uno a uno, pidiendo al usuario 
                    la orientación y casilla inicial de cada uno. 
                    En este caso, cada vez que se coloca un nuevo barco se actualiza el gráfico 
-                   del tablero. xxxxpendiente recoger ax del gráfico. 
+                   del tablero. 
        tri: string con el que se inicializan todas las celdas del tablero. 
              Tipo: str. Valor por defecto: None. 
        opcs: diccionario con las opciones que se muestran al usuario cada vez que se le pide la 
@@ -609,7 +578,7 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
     """
     #
     
-    # $Version: 1 $, $Fecha: 2026-10-20 (mar, 20 oct 2026). Por Julio Blanco Lorenzo. 
+    # $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
     
     
     nomfun = inspect.currentframe().f_code.co_name
@@ -638,8 +607,9 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
             for k, v in opcs.items():
                 msg_in += f'   - {k}: {v}\n'
             print(f'\n-{nomfun}-: \nColocando barcos en tablero: \n')
-            pprint.pprint(tablero)
-            ##### Graficar en fig matplotlib tablero con barcos colocados hasta el momento 
+            # pprint.pprint(tablero)
+            impr_tablero(tablero)
+            ##### PENDIENTE graficar en fig matplotlib tablero con barcos colocados hasta el momento 
             opc_slc = pedir_opc(msg_in, opcs)
             if opc_slc.lower() in oris:
                 ori = opc_slc.lower()
@@ -680,8 +650,9 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
                     tablero_viab.flat[icel_i_viab] = 'V'.ljust(nchr)
                     tablero_viab = tablero_viab.tolist()
                     print(f'\n-{nomfun}-: \nCasillas iniciales viables para barco con ID {id_barco} (eslora={eslora}) y orientación {ori}: \n')
-                    pprint.pprint(tablero_viab)
-                    ##### Graficar tablero con celdas viables coloreadas en verde 
+                    # pprint.pprint(tablero_viab)
+                    impr_tablero(tablero_viab)
+                    ##### Pendiente graficar en fig matplotlib tablero con celdas viables coloreadas en verde 
                     while celda_viable == False and salir == False:
                         msg_in_c = f'\n-{nomfun}-: \nSelecciona casilla inicial para el barco con ID {id_barco} (eslora={eslora}) y orientación {ori} \
                                    \nentre las viables (señaladas con V/coloreadas en verde), o introduce {opc_salir} para salir del juego. '
@@ -720,7 +691,9 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
     
     if caben == False:
         print(f'\n-{nomfun}-: \nTablero con los barcos anteriores colocados: ')
-        pprint.pprint(tablero)
+        # pprint.pprint(tablero)
+        impr_tablero(tablero)
+        #### PENDIENTE crear también figura de matplotlib 
         print()
     
     return caben, tablero, lsts_sep
@@ -847,48 +820,203 @@ def disparar(tablero, icel, s_barco, s_tocado, s_agua):
     return acierto, hundido, id_barco, tablero
 
 
-def graf_tablero(tablero, mostrar_barcos, strs, rgba_cels, rgba_bordes):
+def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_max):
     """
-    Función para graficar un tablero. 
+    Función que da inteligencia a los disparos de la máquina, priorizando 
+    (y posiblemente descartando) celdas adyacentes a una celda en la que 
+    se ha tocado pero no hundido un barco. 
     
     Entradas: 
-       tablero: array 2D (lista de listas, siendo todas las listas anidadas de la misma longitud), 
-                con strings en todas sus posiciones, que pueden representar las posiciones 
-                donde hay barcos, las posiciones a las que se ha disparado, y las posiciones de 
-                separación mínima alrededor de barcos. 
-       mostrar_barcos: booleano con el que se controla si se muestran (True) o no (False) los 
-                       barcos. 
-       strs: lista de strings iniciales con los que se marcan las celdas de los tableros a 
-             colorear. El segundo elemento de la lista corresponde a las celdas con barco y 
-             sin disparo. 
-             Cada elemento de la lista debe ser un string de un único caracter. 
-       rgba_cels: lista con los colores con los que se deben colorear las celdas del 
-                  tablero en formato rgba. Cada elemento de la lista es una tupla de 4 
-                  floats entre 0 y 1. 
-                  Cada elemento de esta lista aplica al elemento correspondiente de la 
-                  lista strs, por orden, por lo que esta lista debería tener la misma 
-                  longitud que strs. 
-                  Si tiene solo colores, cada elemento de la lista tiene la definición de 
-                  un color. 
-                  Si tiene colores y opacidades, cada elemento de la lista es una tupla en 
-                  la que el primer elemento es el color, y el segundo elemento la opacidad. 
-                  La opacidad es un float entre 0 y 1. 
-       rgba_bordes: ídem a rgba_cels, para los bordes de las celdas. 
+       tablero: array 2D con las posiciones descubiertas del tablero marcadas. 
+       icel: índice 1D de una celda a la que se ha disparado en el tablero, en la que se ha 
+             tocado pero no hundido un barco. Entero no negativo. Tipo: int. 
+             Para más información, ver funciones ind_1d_a_2d y ind_2d_a_1d. 
+       sep: nº de casillas de separación mínima entre barcos. Entero positivo (incluyendo 0). 
+            Tipo: int. 
+       strs_descub: lista de strings que marcan que una celda está ocupada. 
+                    Cada string de la lista tiene que tener un único caracter. 
+                    El primer string de la lista debe corresponder a las celdas 
+                    tocadas (celdas disparadas en las que hay barco). 
+       esl_res_2ym_min, esl_res_2ym_max: esloras mínima y máxima de los barcos que quedan 
+               por hundir con eslora de 2 y más. Entero positivo. Tipo: int. 
+       
     
     Salidas: 
-       fig: handle de la figura creada. 
-       ax: handle del gráfico creado. 
+       icels_prio1: lista con índices 1D de celdas que se priorizarán para 
+                    disparos posteriores. Fuera de esta función, estas celdas se 
+                    podrán colocar por delante de celdas priorizadas en llamadas 
+                    previas a esta función. 
+       icels_prio2: lista con índices 1D de celdas que se priorizarán para 
+                    disparos posteriores. Fuera de esta función, estas celdas se 
+                    podrán colocar por detrás de celdas priorizadas en llamadas 
+                    previas a esta función. 
+       icels_descar: lista con índices 1D de celdas en las que se descarta que pueda 
+                     haber barco. Fuera de esta función, estas celdas se podrán 
+                     eliminar de la lista de celdas disponibles para disparar 
+                     del tablero. 
     
     """
     #
     
-    # $Version: 1 $, $Fecha: 2026-10-18 (lun, 19 oct 2026). Por Julio Blanco Lorenzo. 
+    # $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
     
     
     nomfun = inspect.currentframe().f_code.co_name
     
-    fig = None
-    ax = None
+    icels_prio1 = []
+    icels_prio2 = []
+    icels_descar = []
+    
+    nfil = len(tablero)
+    ncol = len(tablero[0])
+    
+    x, y = ind_1d_a_2d(icel, ncol)
+    
+    # Celdas adyacentes a la celda icel dentro del radio sep en cada orientación 
+    # no previamente descubiertas 
+    dic_icels_prio = {'h': [], 'v': []}
+    if sep>0.1:
+        if x+1 in range(ncol):
+            if tablero[y][x+1][0] not in strs_descub:
+                dic_icels_prio['h'].append(ind_2d_a_1d(x+1, y, ncol))
+        if x-1 in range(ncol):
+            if tablero[y][x-1][0] not in strs_descub:
+                dic_icels_prio['h'].append(ind_2d_a_1d(x-1, y, ncol))
+        if y+1 in range(nfil):
+            if tablero[y+1][x][0] not in strs_descub:
+                dic_icels_prio['v'].append(ind_2d_a_1d(x, y+1, ncol))
+        if y-1 in range(nfil):
+            if tablero[y-1][x][0] not in strs_descub:
+                dic_icels_prio['v'].append(ind_2d_a_1d(x, y-1, ncol))
+    
+    # Se intenta determinar la orientación del barco tocado y no hundido 
+    # que pasa por la celda icel, mirando si: 
+    # 1. Hay celdas tocadas dentro del radio sep. 
+    # 2. El barco de eslora máxima que pasa por icel que podría caber 
+    #    en cada orientación, teniendo en cuenta las celdas previamente 
+    #    descubiertas del tablero. 
+    #    - Si la eslora máxima que cabe en una dirección es menor que el 
+    #      menor barco que queda por hundir con eslora a partir de 2, se 
+    #      determina que no es posible que el barco tocado esté colocado 
+    #      en esa orientación. En este caso, las celdas asociadas a esa 
+    #      orientación de dic_icels_prio se descartan, y las de la otra 
+    #      orientación se pasan a icels_prio1. 
+    #    - Si la eslora máxima que cabe en una dirección es menor que el 
+    #      mayor barco que queda por hundir con eslora a partir de 2 
+    #      (y mayor que el menor barco que queda por hundir con eslora 
+    #      a partir de 2), en el vector icels_prio2 se ponen primero 
+    #      las celdas correspondientes a la otra dirección de dic_icels_prio 
+    #      en icels_prio2, y posteriormente se ponen las de la otra dirección. 
+    ori_def = False
+    ori = ''
+    # 1. 
+    i = 0
+    while ori_def == False and i in range(sep):
+        if x+1+i in range(ncol) and ori_def == False:
+            if tablero[y][x+1+i][0] == strs_descub[0]:
+                ori_def = True
+                ori = 'h'
+                no_ori = 'v'
+        if x-1-i in range(ncol) and ori_def == False:
+            if tablero[y][x-1-i][0] == strs_descub[0]:
+                ori_def = True
+                ori = 'h'
+                no_ori = 'v'
+        if y+1+i in range(nfil) and ori_def == False:
+            if tablero[y+1+i][x][0] == strs_descub[0]:
+                ori_def = True
+                ori = 'v'
+                no_ori = 'h'
+        if y-1-i in range(nfil) and ori_def == False:
+            if tablero[y-1-i][x][0] == strs_descub[0]:
+                ori_def = True
+                ori = 'v'
+                no_ori = 'h'
+        i += 1
+    
+    # 2. 
+    if ori_def == False:
+        esl_max_h = 1
+        esl_max_v = 1
+        stop_n = False
+        stop_s = False
+        stop_e = False
+        stop_o = False
+        i = 0
+        while (min(esl_max_h, esl_max_v) < esl_res_2ym_max - 0.1) and (stop_n == False or stop_s == False or stop_e == False or stop_o == False):
+            if x+1+i in range(ncol):
+                if tablero[y][x+1+i][0] not in strs_descub[1:] and stop_e == False:
+                    esl_max_h += 1
+                else:
+                    stop_e = True
+            else:
+                stop_e = True
+            if x-1-i in range(ncol):
+                if tablero[y][x-1-i][0] not in strs_descub[1:] and stop_o == False:
+                    esl_max_h += 1
+                else:
+                    stop_o = True
+            else:
+                stop_o = True
+            if y+1+i in range(nfil):
+                if tablero[y+1+i][x][0] not in strs_descub[1:] and stop_s == False:
+                    esl_max_v += 1
+                else:
+                    stop_s = True
+            else:
+                stop_s = True
+            if y-1-i in range(nfil):
+                if tablero[y-1-i][x][0] not in strs_descub[1:] and stop_n == False:
+                    esl_max_v += 1
+                else:
+                    stop_n = True
+            else:
+                stop_n = True
+            
+            i += 1
+            
+        if esl_max_h < esl_res_2ym_min - 0.1:
+            ori_def = True
+            ori = 'v'
+            no_ori = 'h'
+        if esl_max_v < esl_res_2ym_min - 0.1:
+            ori_def = True
+            ori = 'h'
+            no_ori = 'v'
+    
+    if ori_def == True:
+        if sep > 0.1: 
+            icels_prio1 = dic_icels_prio[ori]
+            icels_descar = dic_icels_prio[no_ori]
+        else:
+            icels_prio2 = dic_icels_prio[ori] + dic_icels_prio[no_ori]
+    elif esl_max_h < esl_res_2ym_max - 0.1:
+        if esl_max_v < esl_res_2ym_max - 0.1:
+            if esl_max_h < esl_max_v:
+                icels_prio2 = dic_icels_prio['v'] + dic_icels_prio['h']
+            else:
+                icels_prio2 = dic_icels_prio['h'] + dic_icels_prio['v']
+        else:
+            icels_prio2 = dic_icels_prio['v'] + dic_icels_prio['h']
+    elif esl_max_v < esl_res_2ym_max - 0.1:
+        if esl_max_h < esl_res_2ym_max - 0.1:
+            if esl_max_h < esl_max_v:
+                icels_prio2 = dic_icels_prio['v'] + dic_icels_prio['h']
+            else:
+                icels_prio2 = dic_icels_prio['h'] + dic_icels_prio['v']
+        else:
+            icels_prio2 = dic_icels_prio['h'] + dic_icels_prio['v']
+    else:
+        icels_prio2 = dic_icels_prio['h'] + dic_icels_prio['v']
+    
+    return icels_prio1, icels_prio2, icels_descar
+
+
+def graf_tablero(ax, tablero, mostrar_barcos, strs, rgba_cels, txt, title):
+    """
+    Función para graficar un tablero. 
+    """
+    
     
     nfil = len(tablero)
     ncol = len(tablero[0])
@@ -902,89 +1030,110 @@ def graf_tablero(tablero, mostrar_barcos, strs, rgba_cels, rgba_bordes):
         tablero_np[msk] = strs[0]
     
     # Máscara numérica de los colores: 
-    color_map = np.zeros(tablero_np.shape, dtype=int)
+    num_data = np.zeros(tablero_np.shape, dtype=int)
     for i, e in enumerate(strs):
         msk = np.char.startswith(tablero_np, e[0])
-        color_map[msk] = i
+        num_data[msk] = i
     
-    # Colormap de las celdas
+    # Colormap de las celdas 
     cmap = ListedColormap(rgba_cels)
     
-    # Colormap de los bordes de las celdas
-    cmap_bordes = ListedColormap(rgba_bordes)
-    
     # Ploteo 
-    fig, ax = plt.subplots()
-    im = ax.imshow(color_map, cmap=cmap, vmin=0, vmax=len(rgba_cels)-1)
+    if ax == None:
+        fig, ax = plt.subplots()
+    ax.imshow(num_data, cmap=cmap, vmin=0, vmax=len(rgba_cels)-1)
     
-    # Mostrar líneas de cuadrícula 
-    for i in range(nfil):
-        for j in range(ncol):
-            rect = patches.Rectangle(
-                (j - 0.5, i - 0.5),  # bottom-left corner
-                1, 1,                # width, height
-                linewidth=1.5,
-                edgecolor='black',
-                facecolor='none'
-            )
-            ax.add_patch(rect)
-    # ax.grid(True, color='black', linewidth=1)
+    # Tick labels
+    x_labels = [chr(ord('A') + i) for i in range(num_data.shape[1])]
+    y_labels = np.arange(1, num_data.shape[0] + 1)
+    ax.set_xticks(np.arange(num_data.shape[1]))
+    ax.set_xticklabels(x_labels)
+    ax.set_yticks(np.arange(num_data.shape[0]))
+    ax.set_yticklabels(y_labels)
     
-    # Etiquetas de ejes: letras empezando en A para el eje horizontal, nºs empezando en 1 para el vertical 
-    ax.set_xticks(np.arange(ncol))
-    ax.set_xticklabels([chr(ord('A') + j) for j in range(ncol)], fontsize=24)
+    # Enable ticks on top and right
+    ax.tick_params(top=True, right=True, labeltop=True, labelright=True)
     
-    ax.set_yticks(np.arange(nfil))
-    ax.set_yticklabels([str(i + 1) for i in range(nfil)], fontsize=24)
+    # Grid lines
+    ax.hlines(np.arange(-0.5, num_data.shape[0], 1), xmin=-0.5, xmax=num_data.shape[1]-0.5,
+              color="black", linewidth=1)
+    ax.vlines(np.arange(-0.5, num_data.shape[1], 1), ymin=-0.5, ymax=num_data.shape[0]-0.5,
+              color="black", linewidth=1)
     
-    # Show ticks on all sides
-    ax.tick_params(top=True, bottom=True, labeltop=True, labelbottom=True,
-                   left=True, right=True, labelleft=True, labelright=True)
-    
-    # Anotación del nombre de los barcos en cada celda con barco 
-    for i in range(tablero_np.shape[0]):
-        for j in range(tablero_np.shape[1]):
-            if tablero_np[i, j][0] == strs[1]:
-                ax.text(j, i, tablero_np[i, j],
-                        ha='center', va='center', color='black', fontsize=18)
-    
-    ax.set_aspect('equal')
-    
-    # Add textbox to the left of the plot
-    ###### Reeemplazar nfil por nbarcos*cte, y añadir textbox_text como parámetro de entrada 
-    ax.text(-1.2, nfil / 2, textbox_text,
-            ha='center', va='center',
-            fontsize=12, color='black',
-            bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
-    
-    plt.show()
-    
-    return fig, ax
+    # Superponer el ID de los barcos en las celdas con barco no tocado 
+    for i in range(num_data.shape[0]):
+        for j in range(num_data.shape[1]):
+            if tablero_np[i, j][0] == strs[1][0]:
+                ax.text(j, i, tablero_np[i, j], ha="center", va="center",
+                        fontsize=14, color="white", fontweight="bold")
+
+    ax.set_title(title, fontsize=12)
+
+    # --- FIX: Textbox relative to axes coordinates ---
+    # Position (-0.2, 0.5) means left of the axes center vertically
+    ax.text(-0.15, 0.5, txt,
+            fontsize=12, va="center", ha="right",
+            bbox=dict(facecolor="white", edgecolor="black", boxstyle="round,pad=0.5"),
+            transform=ax.transAxes)
 
 
+def graf_tableros(tableros, mostrar_barcos, esloras, vidas_barcos, v_strs, v_colores_rgba, ax_titles, f_title):
+    """
+    Función para crear y mostrar figura (png) con dos tableros. 
+    """
+    
+    
+    # --- Create figure with two subplots horizontally ---
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))  # Increased width
+    
+    # Textos con el estado de los barcos para las leyendas 
+    txts = ['', '']
+    for i in range(2):
+        v_esl = esloras[i]
+        n_barc = len(v_esl)
+        v_vid = vidas_barcos[i]
+        v_str_barcos = ['' for i in range(n_barc)]
+        for j in range(n_barc):
+            if mostrar_barcos[i] == True:
+                v_str_barcos[j] = 'o' * v_vid[j] + 'x' * (v_esl[j] - v_vid[j])
+            else:
+                v_str_barcos[j] = 'o' * (1 - ((v_esl[j] - v_vid[j]) // v_esl[j])) * v_esl[j] + 'x' * ((v_esl[j] - v_vid[j]) // v_esl[j]) * v_esl[j]
+        txts[i] = '\n'.join(v_str_barcos)
+    
+    # Plot first array
+    graf_tablero(axes[0], tableros[0], mostrar_barcos[0], v_strs[0], v_colores_rgba[0], txts[0], ax_titles[0])
+    
+    # Plot second array
+    graf_tablero(axes[1], tableros[1], mostrar_barcos[1], v_strs[1], v_colores_rgba[1], txts[1], ax_titles[1])
+    
+    # --- Shrink axes size slightly ---
+    for ax in axes:
+        pos = ax.get_position()
+        ax.set_position([pos.x0, pos.y0 + 0.05, pos.width * 0.8, pos.height * 0.8])
+    
+    # --- Overall title ---
+    fig.suptitle(f_title, fontsize=16, fontweight="bold")
+    
+    # Adjust layout spacing — increased wspace for more separation
+    plt.subplots_adjust(left=0.05, wspace=0.3, top=0.8)
+    
+    # --- Save figure to PNG ---
+    ### PENDIENTE añadir timestamp u otro nº secuencial en el nombre del fichero, para poder guardar todas las figuras 
+    png_path = "..\png\HLF.png"
+    # png_path = "HLF.png"
+    fig.savefig(png_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    
+    # --- Open PNG in default viewer without blocking ---
+    system_name = platform.system()
+    try:
+        if system_name == "Windows":
+            os.startfile(png_path)
+        elif system_name == "Darwin":  # macOS
+            subprocess.Popen(["open", png_path])
+        else:  # Linux and others
+            subprocess.Popen(["xdg-open", png_path])
+    except Exception as e:
+        print(f"⚠️ Could not open image automatically: {e}")
 
 
-
-# PENDIENTES: 
-#     - Función colocar_barco: sacar fuera la parte de verificar si un barco cabe. 
-#          Se va a llamar también fuera, para calcular las casillas viables. **HECHO. 
-#     - Función colocar_barco: añadir como entrada el id del barco, y donde haya barco, imprimir 'B' + su id. **HECHO. 
-#     - Función colocar_barco: añadir como salida los índices de las casillas de separación alrededor del barco. **HECHO. 
-#     - Función disparar: añadir como salida booleano que indique si un barco acertado se ha hundido. **HECHO. 
-#     - Función genérica para pedir y validar input de usuario (para pedir celda por una parte, y para pedir opción por otra). **HECHO. 
-#     - Función para graficar tablero como matriz de colores. **HECHO. 
-#     - Función para crear figura con los dos tableros y con cuadros de texto mostrando las vidas de cada barco. 
-#     - Función para colocar todos los barcos. **HECHO. 
-#     - ¿Crear funciones para pasar índices de 2D a 1D y viceversa? **HECHO. 
-#     - Función probables(tablero): Devuelve la lista de casillas donde es más probable que se sitúe un barco en un tablero 
-#       en el que lo que se conoce son las coordenadas de los disparos previamente efectuados. 
-
-
-# # Create figure with two subplots side-by-side
-# fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-# 
-# plot_colored_grid(axes[0], data1)
-# plot_colored_grid(axes[1], data2)
-# 
-# plt.tight_layout()
-# plt.show()
