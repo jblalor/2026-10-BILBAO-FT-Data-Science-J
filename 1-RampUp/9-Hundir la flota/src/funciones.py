@@ -2,7 +2,7 @@
 
 # Funciones para HLF. 
 
-# $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
+# $Version: 1 $, $Fecha: 2026-10-22 (jue, 22 oct 2026). Por Julio Blanco Lorenzo. 
 
 
 # funciones: 
@@ -858,7 +858,7 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
     """
     #
     
-    # $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
+    # $Version: 1 $, $Fecha: 2026-10-22 (jue, 22 oct 2026). Por Julio Blanco Lorenzo. 
     
     
     nomfun = inspect.currentframe().f_code.co_name

@@ -2,7 +2,7 @@
 
 # Fichero de ejecución principal de Hundir La Flota. 
 
-# $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
+# $Version: 1 $, $Fecha: 2026-10-22 (jue, 22 oct 2026). Por Julio Blanco Lorenzo. 
 
 
 import time
