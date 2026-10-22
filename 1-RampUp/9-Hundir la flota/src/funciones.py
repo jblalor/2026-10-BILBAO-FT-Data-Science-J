@@ -898,15 +898,17 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
     #    - Si la eslora máxima que cabe en una dirección es menor que el 
     #      menor barco que queda por hundir con eslora a partir de 2, se 
     #      determina que no es posible que el barco tocado esté colocado 
-    #      en esa orientación. En este caso, las celdas asociadas a esa 
-    #      orientación de dic_icels_prio se descartan, y las de la otra 
-    #      orientación se pasan a icels_prio1. 
+    #      en esa orientación. 
     #    - Si la eslora máxima que cabe en una dirección es menor que el 
     #      mayor barco que queda por hundir con eslora a partir de 2 
     #      (y mayor que el menor barco que queda por hundir con eslora 
     #      a partir de 2), en el vector icels_prio2 se ponen primero 
     #      las celdas correspondientes a la otra dirección de dic_icels_prio 
     #      en icels_prio2, y posteriormente se ponen las de la otra dirección. 
+    # Si con cualquiera de los métodos 1 ó 2 se consigue determinar la orientación 
+    # del barco, y si además la separación mínima entre barcos es mayor que 0, 
+    # las celdas asociadas a la otra orientación de dic_icels_prio se descartan, 
+    # y las de esa misma orientación se pasan a icels_prio1. 
     ori_def = False
     ori = ''
     # 1. 
