@@ -60,7 +60,8 @@ b_coloc_auto = True
 #   - '1+', '2+', '3+': igual que los correspondientes niveles sin '+', haciendo más 
 #     inteligentes los disparos de la máquina. Disparará primero a las celdas adyacentes 
 #     a barcos tocados no hundidos. 
-nivel = '3+'
+nivel = '9+'
+intelig_maq = False
 if type(nivel) == int:
     nint_maq = nivel
     intelig_maq = False
