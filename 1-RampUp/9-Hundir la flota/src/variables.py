@@ -56,11 +56,11 @@ b_coloc_auto = True
 
 
 # Nivel de dificultad del juego. Opciones: 
-#   - 1, 2, 3: corresponde al nº máximo de intentos de disparo de la máquina en su turno. 
-#   - '1+', '2+', '3+': igual que los correspondientes niveles sin '+', haciendo más 
+#   - 1, 2, 3, ..., 9: corresponde al nº máximo de intentos de disparo de la máquina en su turno. 
+#   - '1+', '2+', '3+', ..., '9+': igual que los correspondientes niveles sin '+', haciendo más 
 #     inteligentes los disparos de la máquina. Disparará primero a las celdas adyacentes 
 #     a barcos tocados no hundidos. 
-nivel = '9+'
+nivel = '3+'
 intelig_maq = False
 if type(nivel) == int:
     nint_maq = nivel
