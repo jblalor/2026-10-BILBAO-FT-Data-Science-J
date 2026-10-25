@@ -3,12 +3,10 @@
 # Funciones para HLF. 
 
 # $Version: 1 $, $Fecha: 2026-10-22 (jue, 22 oct 2026). Por Julio Blanco Lorenzo. 
-
-
-# funciones: 
-# probables(tablero)
-#   Devuelve la lista de casillas donde es más probable que se sitúe un barco en un tablero en el que lo que se conoce son
-#   las coordenadas de los disparos previamente efectuados. 
+# $Version: 2 $, $Fecha: 2026-10-25 (dom, 25 oct 2026). Por Julio Blanco Lorenzo. 
+#   Cambios en funciones colocar_barco, colocar_barcos, rep_colocar_barcos y 
+#   intelig_disp, relacionados con la lógica para dar inteligencia a los disparos 
+#   cuando hay barcos tocados y no hundidos. 
 
 
 import inspect
@@ -423,17 +421,22 @@ def colocar_barco(tablero, n_barco, eslora, ori, icel_ini, sep, strs_ocup):
        lst_sep: lista de las celdas correspondientes a la separación mínima alrededor del nuevo 
                 barco. Cada elemento de la lista es el índice 1D de una celda (para más información, 
                 ver funciones ind_1d_a_2d y ind_2d_a_1d). 
+       lst_barco: lista de las celdas del nuevo barco. Cada elemento de la lista es el índice 1D de 
+                  una celda. 
     
     """
     #
     
     # $Version: 1 $, $Fecha: 2026-10-18 (dom, 18 oct 2026). Por Julio Blanco Lorenzo. 
+    # $Version: 2 $, $Fecha: 2026-10-26 (dom, 26 oct 2026). Por Julio Blanco Lorenzo. 
+    #    Se añade como salida lst_barco. 
     
     
     nomfun = inspect.currentframe().f_code.co_name
     
     cabe = True
     lst_sep = []
+    lst_barco = []
     
     nfil = len(tablero)
     ncol = len(tablero[0])
@@ -468,8 +471,9 @@ def colocar_barco(tablero, n_barco, eslora, ori, icel_ini, sep, strs_ocup):
             tablero[y][x] = (strs_ocup[0] + str(n_barco)).ljust(nchr)
             ind1 = ind_2d_a_1d(x, y, ncol)
             lst_sep.remove(ind1)
+            lst_barco.append(ind1)
     
-    return cabe, tablero, lst_sep
+    return cabe, tablero, lst_sep, lst_barco
 
 
 def viables(tablero, eslora, ori, sep, strs_ocup):
@@ -555,7 +559,7 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
                    la orientación y casilla inicial de cada uno. 
                    En este caso, cada vez que se coloca un nuevo barco se actualiza el gráfico 
                    del tablero. 
-       tri: string con el que se inicializan todas las celdas del tablero. 
+       stri: string con el que se inicializan todas las celdas del tablero. 
              Tipo: str. Valor por defecto: None. 
        opcs: diccionario con las opciones que se muestran al usuario cada vez que se le pide la 
              orientación de un nuevo barco. Tanto los keys como los values son strings. 
@@ -574,11 +578,15 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
                 los posteriores de la lista tampoco se colocan. 
        lsts_sep: Lista con la lista lst_sep que devuelve la función colocar_barco para cada barco 
                  (ver descripción de lst_sep en doc de función colocar_barco). 
+       lsts_bar: Lista con la lista lst_barco que devuelve la función colocar_barco para cada 
+                 barco (ver descripción de lst_barco en doc de función colocar_barco). 
     
     """
     #
     
     # $Version: 1 $, $Fecha: 2026-10-21 (mie, 21 oct 2026). Por Julio Blanco Lorenzo. 
+    # $Version: 2 $, $Fecha: 2026-10-26 (dom, 26 oct 2026). Por Julio Blanco Lorenzo. 
+    #    Se añade como salida lsts_bar. 
     
     
     nomfun = inspect.currentframe().f_code.co_name
@@ -593,6 +601,7 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
     
     n_barcos = len(esloras)
     lsts_sep = [[] for i in range(n_barcos)]
+    lsts_bar = [[] for i in range(n_barcos)]
     
     if modo=='auto':
         opc_slc = oris[0]
@@ -669,7 +678,7 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
                                 print(f'\n-{nomfun}-: \nATENCIÓN: La casilla seleccionada no está entre las viables. ')
                     
                 # Colocar el nuevo barco 
-                cabe_b, tablero, lst_sep_b = colocar_barco(tablero, id_barco, eslora, ori, icel_i, sep, strs_ocup)
+                cabe_b, tablero, lst_sep_b, lst_barco = colocar_barco(tablero, id_barco, eslora, ori, icel_i, sep, strs_ocup)
                 xi, yi = ind_1d_a_2d(icel_i, ncol)
                 if cabe_b == False:
                     caben = False
@@ -678,6 +687,7 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
                             \n   Revisar código. \n')
                 else:
                     lsts_sep[id_barco] = lst_sep_b
+                    lsts_bar[id_barco] = lst_barco
                 id_barco += 1
         elif opc_slc == opc_reiniciar:
             id_barco = 0
@@ -696,7 +706,7 @@ def colocar_barcos(tablero, esloras, sep, strs_ocup, modo='auto', stri=None, opc
         #### PENDIENTE crear también figura de matplotlib 
         print()
     
-    return caben, tablero, lsts_sep
+    return caben, tablero, lsts_sep, lsts_bar
 
 
 def rep_colocar_barcos(stri, ncol, nfil, esloras, sep, strs_ocup, maxint):
@@ -731,11 +741,15 @@ def rep_colocar_barcos(stri, ncol, nfil, esloras, sep, strs_ocup, maxint):
                 debe haber separación entre barcos marcadas. 
        lsts_sep: Lista con la lista lst_sep que devuelve la función colocar_barco para cada barco 
                  (ver descripción de lst_sep en doc de función colocar_barco). 
+       lsts_bar: Lista con la lista lst_barco que devuelve la función colocar_barco para cada 
+                 barco (ver descripción de lst_barco en doc de función colocar_barco). 
     
     """
     #
     
     # $Version: 1 $, $Fecha: 2026-10-19 (lun, 19 oct 2026). Por Julio Blanco Lorenzo. 
+    # $Version: 2 $, $Fecha: 2026-10-26 (dom, 26 oct 2026). Por Julio Blanco Lorenzo. 
+    #    Se añade como salida lsts_bar. 
     
     
     nomfun = inspect.currentframe().f_code.co_name
@@ -746,18 +760,19 @@ def rep_colocar_barcos(stri, ncol, nfil, esloras, sep, strs_ocup, maxint):
     
     n_barcos = len(esloras)
     lsts_sep = [[] for i in range(n_barcos)]
+    lsts_bar = [[] for i in range(n_barcos)]
     
     i_colocar = 0
     
     while i_colocar < maxint - 0.1 and caben == False:
         print(f'\n-{nomfun}-: \nIntento {i_colocar+1}... ')
         tablero = inic_tablero(stri, ncol, nfil)
-        caben, tablero, lsts_sep = colocar_barcos(tablero, esloras, sep, strs_ocup)
+        caben, tablero, lsts_sep, lsts_bar = colocar_barcos(tablero, esloras, sep, strs_ocup)
         if caben == True:
             print(f'\n-{nomfun}-: \nSe han conseguido colocar todos los barcos en el tablero en el intento {i_colocar+1}. ')
         i_colocar += 1
     
-    return caben, tablero, lsts_sep
+    return caben, tablero, lsts_sep, lsts_bar
 
 
 def disparar(tablero, icel, s_barco, s_tocado, s_agua):
@@ -820,7 +835,7 @@ def disparar(tablero, icel, s_barco, s_tocado, s_agua):
     return acierto, hundido, id_barco, tablero
 
 
-def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_max):
+def intelig_disp(tablero, icel, icels_tocadas, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_max):
     """
     Función que da inteligencia a los disparos de la máquina, priorizando 
     (y posiblemente descartando) celdas adyacentes a una celda en la que 
@@ -831,6 +846,8 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
        icel: índice 1D de una celda a la que se ha disparado en el tablero, en la que se ha 
              tocado pero no hundido un barco. Entero no negativo. Tipo: int. 
              Para más información, ver funciones ind_1d_a_2d y ind_2d_a_1d. 
+       icels_tocadas: lista de índices 1D de todas las celdas tocadas de barcos 
+                      que todavía no han sido hundidos. 
        sep: nº de casillas de separación mínima entre barcos. Entero positivo (incluyendo 0). 
             Tipo: int. 
        strs_descub: lista de strings que marcan que una celda está ocupada. 
@@ -854,11 +871,26 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
                      haber barco. Fuera de esta función, estas celdas se podrán 
                      eliminar de la lista de celdas disponibles para disparar 
                      del tablero. 
+       ori: orientación deducida (o en el caso de sep=0, considerada como probable) 
+            del barco. 'h' para horizontal, 'v' para vertical, o '' si está indeterminada. 
+            Tipo: str. 
     
     """
     #
     
     # $Version: 1 $, $Fecha: 2026-10-22 (jue, 22 oct 2026). Por Julio Blanco Lorenzo. 
+    # $Version: 2 $, $Fecha: 2026-10-26 (dom, 26 oct 2026). Por Julio Blanco Lorenzo. 
+    #    - Se añade icels_tocadas como entrada. 
+    #    - Se añade ori como salida. 
+    #    - Se buscan las celdas adyacentes a icel también cuando sep=0. 
+    #    - Se reordenan aleatoriamente las listas de dic_icels_prio, y el vector icels_prio2 
+    #      devuelto cuando no se ha determinado la orientación del barco ni se ha considerado 
+    #      más probable una orientación que otra. 
+    #    - Se trata de deducir la orientación probable del barco buscando celdas adyacentes 
+    #      tocadas (de barcos no hundidos) para sep=0, aunque esa orientación deducida no 
+    #      será probable. 
+    #    - Para sep=0, cuando ori_def==True, dic_icels_prio[ori] se pasa en la salida 
+    #      icels_prio1 en vez de en icels_prio2. 
     
     
     nomfun = inspect.currentframe().f_code.co_name
@@ -872,22 +904,25 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
     
     x, y = ind_1d_a_2d(icel, ncol)
     
-    # Celdas adyacentes a la celda icel dentro del radio sep en cada orientación 
+    # Celdas adyacentes a la celda icel en cada orientación 
     # no previamente descubiertas 
     dic_icels_prio = {'h': [], 'v': []}
-    if sep>0.1:
-        if x+1 in range(ncol):
-            if tablero[y][x+1][0] not in strs_descub:
-                dic_icels_prio['h'].append(ind_2d_a_1d(x+1, y, ncol))
-        if x-1 in range(ncol):
-            if tablero[y][x-1][0] not in strs_descub:
-                dic_icels_prio['h'].append(ind_2d_a_1d(x-1, y, ncol))
-        if y+1 in range(nfil):
-            if tablero[y+1][x][0] not in strs_descub:
-                dic_icels_prio['v'].append(ind_2d_a_1d(x, y+1, ncol))
-        if y-1 in range(nfil):
-            if tablero[y-1][x][0] not in strs_descub:
-                dic_icels_prio['v'].append(ind_2d_a_1d(x, y-1, ncol))
+    
+    if x+1 in range(ncol):
+        if tablero[y][x+1][0] not in strs_descub:
+            dic_icels_prio['h'].append(ind_2d_a_1d(x+1, y, ncol))
+    if x-1 in range(ncol):
+        if tablero[y][x-1][0] not in strs_descub:
+            dic_icels_prio['h'].append(ind_2d_a_1d(x-1, y, ncol))
+    if y+1 in range(nfil):
+        if tablero[y+1][x][0] not in strs_descub:
+            dic_icels_prio['v'].append(ind_2d_a_1d(x, y+1, ncol))
+    if y-1 in range(nfil):
+        if tablero[y-1][x][0] not in strs_descub:
+            dic_icels_prio['v'].append(ind_2d_a_1d(x, y-1, ncol))
+    
+    rnd.shuffle(dic_icels_prio['h'])
+    rnd.shuffle(dic_icels_prio['v'])
     
     # Se intenta determinar la orientación del barco tocado y no hundido 
     # que pasa por la celda icel, mirando si: 
@@ -913,24 +948,24 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
     ori = ''
     # 1. 
     i = 0
-    while ori_def == False and i in range(sep):
+    while ori_def == False and i in range(max(1, sep)):
         if x+1+i in range(ncol) and ori_def == False:
-            if tablero[y][x+1+i][0] == strs_descub[0]:
+            if tablero[y][x+1+i][0] == strs_descub[0] and ind_2d_a_1d(x+1+i, y, ncol) in icels_tocadas:
                 ori_def = True
                 ori = 'h'
                 no_ori = 'v'
         if x-1-i in range(ncol) and ori_def == False:
-            if tablero[y][x-1-i][0] == strs_descub[0]:
+            if tablero[y][x-1-i][0] == strs_descub[0] and ind_2d_a_1d(x-1-i, y, ncol) in icels_tocadas:
                 ori_def = True
                 ori = 'h'
                 no_ori = 'v'
         if y+1+i in range(nfil) and ori_def == False:
-            if tablero[y+1+i][x][0] == strs_descub[0]:
+            if tablero[y+1+i][x][0] == strs_descub[0] and ind_2d_a_1d(x, y+1+i, ncol) in icels_tocadas:
                 ori_def = True
                 ori = 'v'
                 no_ori = 'h'
         if y-1-i in range(nfil) and ori_def == False:
-            if tablero[y-1-i][x][0] == strs_descub[0]:
+            if tablero[y-1-i][x][0] == strs_descub[0] and ind_2d_a_1d(x, y-1-i, ncol) in icels_tocadas:
                 ori_def = True
                 ori = 'v'
                 no_ori = 'h'
@@ -987,11 +1022,11 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
             no_ori = 'v'
     
     if ori_def == True:
+        icels_prio1 = dic_icels_prio[ori]
         if sep > 0.1: 
-            icels_prio1 = dic_icels_prio[ori]
             icels_descar = dic_icels_prio[no_ori]
         else:
-            icels_prio2 = dic_icels_prio[ori] + dic_icels_prio[no_ori]
+            icels_prio2 = dic_icels_prio[no_ori]
     elif esl_max_h < esl_res_2ym_max - 0.1:
         if esl_max_v < esl_res_2ym_max - 0.1:
             if esl_max_h < esl_max_v:
@@ -1010,8 +1045,9 @@ def intelig_disp(tablero, icel, sep, strs_descub, esl_res_2ym_min, esl_res_2ym_m
             icels_prio2 = dic_icels_prio['h'] + dic_icels_prio['v']
     else:
         icels_prio2 = dic_icels_prio['h'] + dic_icels_prio['v']
+        rnd.shuffle(icels_prio2)
     
-    return icels_prio1, icels_prio2, icels_descar
+    return icels_prio1, icels_prio2, icels_descar, ori
 
 
 def graf_tablero(ax, tablero, mostrar_barcos, strs, rgba_cels, txt, title):

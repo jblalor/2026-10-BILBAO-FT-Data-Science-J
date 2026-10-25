@@ -3,6 +3,9 @@
 # Fichero de ejecución principal de Hundir La Flota. 
 
 # $Version: 1 $, $Fecha: 2026-10-22 (jue, 22 oct 2026). Por Julio Blanco Lorenzo. 
+# $Version: 2 $, $Fecha: 2026-10-26 (dom, 26 oct 2026). Por Julio Blanco Lorenzo. 
+#    Cambios para depurar la lógica relacionada con la inteligencia de los disparos 
+#    de la máquina (activada cuando intelig_maq==True). 
 
 
 import time
@@ -24,6 +27,7 @@ tableros = [[], []]  # El primer tablero corresponde a la persona, y el segundo 
 cels_no_descub = [list(range(ncol[0]*nfil[0])), list(range(ncol[1]*nfil[1]))]
 ncels_no_descub = [len(cels_no_descub[0]), len(cels_no_descub[1])]
 lsts_sep = [None, None]
+lsts_bar = [None, None]
 
 for i in range(2):
     tableros[i] = inic_tablero(str_ini[i], ncol[i], nfil[i])
@@ -57,7 +61,7 @@ while caben[0] == False or caben[1] == False or opc_slc == opc_colocar:
         # Colocación de los barcos, empezando por el segundo tablero 
         #Segundo tablero 
         print(f'\n-HLF-: \nColocando barcos en tablero 2 ({noms_jug[1]})... \n')
-        caben[1], tableros[1], lsts_sep[1] = rep_colocar_barcos(str_ini[1], ncol[1], nfil[1], esloras[1], seps[1], strs_ocup, maxint_colocar)
+        caben[1], tableros[1], lsts_sep[1], lsts_bar[1] = rep_colocar_barcos(str_ini[1], ncol[1], nfil[1], esloras[1], seps[1], strs_ocup, maxint_colocar)
         time.sleep(0.5)
         if caben[1] == False:
             print(f'\n-HLF-: \nERROR: no se han podido colocar todos los barcos en el segundo tablero, de {noms_jug[1]}. \n')
@@ -69,11 +73,11 @@ while caben[0] == False or caben[1] == False or opc_slc == opc_colocar:
             # Primer tablero
             print(f'\n-HLF-: \nColocando barcos en tablero 1 ({noms_jug[0]})... \n')
             if b_coloc_auto == True:
-                caben[0], tableros[0], lsts_sep[0] = rep_colocar_barcos(str_ini[0], ncol[0], nfil[0], esloras[0], seps[0], strs_ocup, maxint_colocar)
+                caben[0], tableros[0], lsts_sep[0], lsts_bar[0] = rep_colocar_barcos(str_ini[0], ncol[0], nfil[0], esloras[0], seps[0], strs_ocup, maxint_colocar)
             else:
                 # Colocación manual de barcos 
                 tableros[0] = inic_tablero(str_ini[0], ncol[0], nfil[0])
-                caben[0], tableros[0], lsts_sep[0] = colocar_barcos(tableros[0], esloras[0], seps[0], strs_ocup, modo='man', stri=str_ini[0], opcs=opcs_ori, opc_reiniciar=opc_reiniciar, opc_salir=opc_salir)
+                caben[0], tableros[0], lsts_sep[0], lsts_bar[0] = colocar_barcos(tableros[0], esloras[0], seps[0], strs_ocup, modo='man', stri=str_ini[0], opcs=opcs_ori, opc_reiniciar=opc_reiniciar, opc_salir=opc_salir)
             if caben[0] == False:
                 print(f'\n-HLF-: \nERROR: no se han podido colocar todos los barcos en el primer tablero, de {noms_jug[0]}. \n')
             else:
@@ -92,15 +96,26 @@ while caben[0] == False or caben[1] == False or opc_slc == opc_colocar:
 ## Inicio del juego 
 tableros_shw = tableros.copy()
 disparos = [0, 0]
-hay_toc = [False, False]  # Booleanos que indican si hay algún barco tocado y no hundido en cada tablero 
-# Lista con las celdas tocadas de barcos no hundidos en el tablero del jugador 1, 
+# hay_toc = [False, False]  # Booleanos que indican si hay algún barco tocado y no hundido en cada tablero 
+# Lista con las celdas adyacentes a celdas tocadas de barcos no hundidos en el tablero del jugador 1, 
 # que la máquina tendrá en cuenta en los niveles i+: 
-lst_probables = []  
+lst_probables = []
+# Lista con las celdas adyacentes a celdas tocadas de barcos no hundidos en el tablero del jugador 1. 
+# Cada elemento de la lista es una lista con el índice 1D de la celda tocada como primer elemento, y 
+# con un string como segundo elemento que indica la orientación deducida para el barco que pasa 
+# por esa celda. 
+lst_tocadas = []
+icels_tocadas = []
 
 if modo_juego != 'demo':
     # Tablero del jugador 2 (máquina) ocultando las posiciones donde hay barco o las reservadas 
     # para separación mínima entre barcos 
     tableros_shw[1] = [[tableros_shw[1][j][i] if tableros_shw[1][j][i][0] not in strs_ocup else str_ini[1] for i in range(len(tableros_shw[1][0]))] for j in range(len(tableros_shw[1]))]
+
+esl_res_2ym = [e for i, e in enumerate(esloras[0]) if (e > 1.1) and (vidas_barcos[0][i] > 0.1)]
+if len(esl_res_2ym) > 0.1:
+    esl_res_2ym_min = min(esl_res_2ym)
+    esl_res_2ym_max = max(esl_res_2ym)
 
 tur = j_primero
 nju = 1
@@ -171,7 +186,7 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
     # Eliminar celda disparada de la lista de celdas disponibles para disparar 
     if icel in cels_no_descub[1-tur]:
         cels_no_descub[1-tur].remove(icel)
-    if icel in lst_probables:
+    if intelig_maq == True and tur == 1 and icel in lst_probables:
         lst_probables.remove(icel)
     disparos[tur] += 1
     tableros_shw[1-tur][y][x] = tableros[1-tur][y][x]
@@ -183,7 +198,7 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
         vidas_barcos[1-tur][id_barco] -= 1
         esloras_np = np.array(esloras[1-tur])
         vidas_barcos_np = np.array(vidas_barcos[1-tur])
-        hay_toc[1-tur] = np.any((vidas_barcos_np < esloras_np - 0.1) & (vidas_barcos_np > 0.1))
+        # hay_toc[1-tur] = np.any((vidas_barcos_np < esloras_np - 0.1) & (vidas_barcos_np > 0.1))
         if hundido == True:
             msg_rst_f = f'TOCADO Y HUNDIDO BARCO CON ID {id_barco} \n'
             if b_dsabh == True:
@@ -202,18 +217,27 @@ while opc_slc == opc_jugar and vidas[0] > 0.1 and vidas[1] > 0.1:
                 tablero_flat[np.array(lsts_sep[1-tur][id_barco])[msk]] = tablero_shw_flat[np.array(lsts_sep[1-tur][id_barco])[msk]]
                 tableros_shw[1-tur] = tablero_shw_np.tolist()
                 tableros[1-tur] = tablero_np.tolist()
+            if intelig_maq == True and tur == 1:
+                lst_tocadas = [e for e in lst_tocadas if e[0] not in lsts_bar[1-tur][id_barco]]
+                icels_tocadas = [e[0] for e in lst_tocadas]
+                esl_res_2ym = [e for i, e in enumerate(esloras[1-tur]) if (e > 1.1) and (vidas_barcos[1-tur][i] > 0.1)]
+                if len(esl_res_2ym) > 0.1: 
+                    esl_res_2ym_min = min(esl_res_2ym)
+                    esl_res_2ym_max = max(esl_res_2ym)
         else:
             msg_rst_f = 'TOCADO \n'
             if intelig_maq == True and tur == 1:
-                esl_res_2ym = [e for i, e in enumerate(esloras[1-tur]) if (e > 1.1) and (vidas_barcos[1-tur][i] > 0.1)]
-                esl_res_2ym_min = min(esl_res_2ym)
-                esl_res_2ym_max = max(esl_res_2ym)
-                icels_prio1, icels_prio2, icels_descar = intelig_disp(tableros[1-tur], icel, seps[1-tur], strs_descub, esl_res_2ym_min, esl_res_2ym_max)
-                icels_prio1_f = [e for e in icels_prio1 if e not in lst_probables]
-                icels_prio2_f = [e for e in icels_prio2 if e not in lst_probables]
-                lst_probables = [e for e in lst_probables if e not in icels_descar]
-                lst_probables = icels_prio1_f + lst_probables + icels_prio2_f
-                cels_no_descub[1-tur] = [e for e in cels_no_descub[1-tur] if e not in icels_descar]
+                lst_tocadas.insert(0, [icel, ''])
+                icels_tocadas = [e[0] for e in lst_tocadas]
+                for e in lst_tocadas:
+                    if e[1] == '':
+                        icels_prio1, icels_prio2, icels_descar, e[1] = intelig_disp(tableros[1-tur], e[0], icels_tocadas, seps[1-tur], strs_descub, esl_res_2ym_min, esl_res_2ym_max)
+                        lst_probables = [e for e in lst_probables if e not in icels_prio1]
+                        lst_probables = icels_prio1 + lst_probables
+                        icels_prio2_f = [e for e in icels_prio2 if e not in lst_probables]
+                        lst_probables = [e for e in lst_probables if e not in icels_descar]
+                        lst_probables = lst_probables + icels_prio2_f
+                        cels_no_descub[1-tur] = [e for e in cels_no_descub[1-tur] if e not in icels_descar]
     else:
         msg_rst_f = 'AGUA \n'
         # Pasar turno 
