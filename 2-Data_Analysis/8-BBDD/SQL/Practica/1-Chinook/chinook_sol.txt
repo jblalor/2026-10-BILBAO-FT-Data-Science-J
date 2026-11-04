@@ -49,7 +49,8 @@ SELECT BillingCountry, COUNT(BillingCountry) FROM invoices
 GROUP BY BillingCountry;
 
 12. 
-
+SELECT COUNT(InvoiceId) FROM invoices
+WHERE InvoiceDate LIKE '2009%' OR InvoiceDate LIKE '2011%';
 
 13. 
 SELECT COUNT(InvoiceId) FROM invoices
