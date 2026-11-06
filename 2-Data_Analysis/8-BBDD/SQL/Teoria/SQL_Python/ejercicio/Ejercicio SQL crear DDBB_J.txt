@@ -1,0 +1,149 @@
+---Creación de tablas de la base de datos 
+CREATE TABLE cervezas (
+     CodC INT,
+     Envase varchar(255),
+     Capacidad REAL,
+     Stock INT
+ );
+ 
+INSERT INTO cervezas (CodC, Envase, Capacidad, Stock)
+VALUES 
+  (1, 'Botella', 0.2, 3600),
+  (2, 'Botella', 0.33, 1200),
+  (3, 'Lata', 0.33, 2400),
+  (4, 'Botella', 1, 288),
+  (5, 'Barril', 60, 30);
+
+
+CREATE TABLE bares (
+     CodB INT,
+     Cif varchar(12),
+     Nombre varchar(255),
+     Localidad varchar(255)
+ );
+ 
+INSERT INTO bares (CodB, Cif, Nombre, Localidad)
+VALUES 
+  (1, '11111111X', 'Stop', 'Villa Botijo'),
+  (2, '22222222Y', 'Las Vegas', 'Villa Botijo'),
+  (3, '-', 'Club Social', 'Las Ranas'),
+  (4, '33333333Z', 'Otra Ronda', 'La Esponja');
+
+
+CREATE TABLE empleados (
+     CodE INT,
+     Nombre varchar(255),
+     Sueldo REAL
+ );
+ 
+INSERT INTO empleados (CodE, Nombre, Sueldo)
+VALUES 
+  (1, 'Prudencio Caminero', 120000),
+  (2, 'Vicente Merario', 110000),
+  (3, 'Valentin Siempre', 100000);
+
+
+CREATE TABLE reparto (
+     CodE INT,
+     CodB INT,
+     CodC INT,
+     Fecha DATE,
+     Cantidad REAL
+ );
+ 
+
+INSERT INTO reparto (CodE, CodB, CodC, Fecha, Cantidad)
+VALUES 
+  (1, 1, 1, '2005-10-21', 240),
+  (1, 1, 2, '2005-10-21', 48),
+  (1, 2, 3, '2005-10-22', 60),
+  (1, 4, 5, '2005-10-22', 4),
+  (2, 2, 3, '2005-10-22', 48),
+  (2, 2, 5, '2005-10-23', 2),
+  (2, 4, 1, '2005-10-23', 480),
+  (2, 4, 2, '2005-10-24', 72),
+  (3, 3, 3, '2005-10-24', 48),
+  (3, 3, 4, '2005-10-25', 20);
+
+
+
+---Enunciados de los ejercicios 
+---1. 
+SELECT DISTINCT E.Nombre
+FROM reparto R
+LEFT JOIN empleados E ON R.CodE = E.CodE
+LEFT JOIN bares B ON R.CodB = B.CodB
+WHERE R.Fecha BETWEEN '2005-10-17' AND '2005-10-23'
+ AND B.Nombre = 'Stop';
+
+---2. 
+SELECT DISTINCT B.Cif, B.Nombre, B.Localidad
+FROM reparto R
+LEFT JOIN bares B ON R.CodB = B.CodB
+LEFT JOIN cervezas C ON R.CodC = C.CodC
+WHERE C.Envase = 'Botella' AND C.Capacidad < 1
+ORDER BY B.Localidad;
+
+---3. 
+SELECT B.Nombre, C.Envase, C.Capacidad, R.Fecha, R.Cantidad
+FROM reparto R
+LEFT JOIN empleados E ON R.CodE = E.CodE
+LEFT JOIN bares B ON R.CodB = B.CodB
+LEFT JOIN cervezas C ON R.CodC = C.CodC
+WHERE E.Nombre = 'Prudencio Caminero';
+
+---4. 
+SELECT DISTINCT B.Cif, B.Nombre, B.Localidad
+FROM reparto R
+LEFT JOIN bares B ON R.CodB = B.CodB
+LEFT JOIN cervezas C ON R.CodC = C.CodC
+WHERE C.Envase = 'Botella' AND C.Capacidad IN (0.2, 0.33);
+
+---5. 
+SELECT DISTINCT E.Nombre
+FROM reparto R
+LEFT JOIN empleados E ON R.CodE = E.CodE
+LEFT JOIN bares B ON R.CodB = B.CodB
+LEFT JOIN cervezas C ON R.CodC = C.CodC
+WHERE B.Nombre IN ('Stop', 'Las Vegas') AND C.Envase = 'Botella';
+
+---6. 
+SELECT E.Nombre as 'Nombre empleado', 
+  COUNT(*) AS 'Nº de viajes fuera de Villa Botijo'
+FROM reparto R
+LEFT JOIN empleados E ON R.CodE = E.CodE
+LEFT JOIN bares B ON R.CodB = B.CodB
+WHERE B.Localidad != 'Villa Botijo'
+GROUP BY R.CodE;
+
+---7. 
+SELECT B.Nombre, B.Localidad, SUM(R.Cantidad * C.Capacidad) AS 'total litros cerveza comprados'
+FROM reparto R
+LEFT JOIN bares B ON R.CodB = B.CodB
+LEFT JOIN cervezas C ON R.CodC = C.CodC
+GROUP BY R.CodB
+ORDER BY SUM(R.Cantidad * C.Capacidad) DESC
+LIMIT 1;
+
+---8. 
+SELECT DISTINCT B.Nombre, B.Localidad
+FROM reparto R
+LEFT JOIN bares B ON R.CodB = B.CodB
+LEFT JOIN cervezas C ON R.CodC = C.CodC
+WHERE C.Envase = 'Botella' AND C.Capacidad < 1;
+
+---9. 
+UPDATE empleados
+SET Sueldo = Sueldo * 1.05
+WHERE CodE IN (SELECT CodE
+FROM reparto R
+GROUP BY CodE
+ORDER BY COUNT(DISTINCT Fecha) DESC
+LIMIT 1);
+
+---10. 
+INSERT INTO reparto
+VALUES ((SELECT CodE FROM empleados WHERE Nombre = 'Vicente Merario'), 
+ (SELECT CodB FROM bares WHERE Nombre = 'Stop'), 
+ (SELECT CodC FROM cervezas WHERE Envase = 'Lata'), 
+ '2005-10-26', 48);

@@ -2,43 +2,55 @@ PRIMERA PARTE
 1. 
 SELECT *
 FROM customers
-WHERE customers.Country = "Brazil";
+WHERE Country = "Brazil";
 
 2. 
 SELECT *
 FROM employees
-WHERE employees.Title = 'Sales Support Agent';
+WHERE Title = 'Sales Support Agent';
 
 3. 
 SELECT *
 FROM tracks
-WHERE tracks.Composer = 'AC/DC';
+WHERE Composer = 'AC/DC';
+# Lo correcto es lo siguiente: 
+SELECT tracks.Name, artists.Name, albums.Title FROM tracks
+INNER JOIN albums ON albums.AlbumId = tracks.AlbumId
+INNER JOIN artists ON artists.ArtistId = albums.ArtistId
+WHERE artists.Name = 'AC/DC';
 
 4. 
 SELECT CustomerId, FirstName, LastName, Country
 FROM customers
-WHERE customers.Country != 'USA';
+WHERE Country != 'USA';
 
 5. 
 SELECT LastName, FirstName, City, State, Country, Email
 FROM employees
-WHERE employees.Title = 'Sales Support Agent';
+WHERE Title = 'Sales Support Agent';
 
 6. 
 SELECT DISTINCT BillingCountry FROM invoices;
 
 7. 
-SELECT State, COUNT(State) FROM customers
-WHERE customers.Country = 'USA'
+SELECT State, COUNT(*) FROM customers
+WHERE Country = 'USA'
 GROUP BY State;
 
 8. 
-SELECT COUNT(InvoiceId) FROM invoice_items
+SELECT COUNT(*) FROM invoice_items
 WHERE InvoiceId = 37;
 
 9. 
 SELECT COUNT(TrackId) FROM tracks
 WHERE Composer = 'AC/DC';
+# Lo correcto es lo siguiente:
+SELECT artists.Name, COUNT(TRACKS.TRACKiD)
+FROM TRACKS
+INNER JOIN albums ON tracks.albumId = albums.albumId
+INNER JOIN artists ON albums.artistId = artists.artistId
+WHERE artists.Name = 'AC/DC'
+GROUP BY 1; 
 
 10. 
 SELECT InvoiceId, COUNT(InvoiceId) FROM invoice_items
@@ -51,6 +63,9 @@ GROUP BY BillingCountry;
 12. 
 SELECT COUNT(InvoiceId) FROM invoices
 WHERE InvoiceDate LIKE '2009%' OR InvoiceDate LIKE '2011%';
+# Otra forma: 
+SELECT COUNT(InvoiceId) FROM invoices
+WHERE strftime('%Y', Invoicedate) = '2009' OR strftime('%Y', Invoicedate) = '2011';
 
 13. 
 SELECT COUNT(InvoiceId) FROM invoices
@@ -59,6 +74,10 @@ WHERE InvoiceDate BETWEEN '2009-01-01' AND '2011-12-31';
 14. 
 SELECT Country, Count(CustomerId) FROM customers
 WHERE Country = 'Brazil' OR Country = 'Spain'
+GROUP BY Country;
+# Otra forma: 
+SELECT Country, Count(CustomerId) FROM customers
+WHERE Country IN ('Brazil', 'Spain')
 GROUP BY Country;
 
 15. 
@@ -69,30 +88,42 @@ WHERE Name LIKE 'You%';
 SEGUNDA PARTE 
 1. 
 SELECT C.FirstName, C.LastName, I.InvoiceId, I.InvoiceDate, I.BillingCountry
-FROM customers C LEFT JOIN invoices I on C.CustomerId = I.InvoiceId
+FROM customers C LEFT JOIN invoices I ON C.CustomerId = I.InvoiceId
 WHERE C.Country = 'Brazil';
 
 2. 
-SELECT I.InvoiceId, E.FirstName as 'nombre agente', E.LastName as 'apellido agente' FROM invoices I
-LEFT JOIN customers C on I.CustomerId = C.CustomerId
-LEFT JOIN employees E on C.SupportRepId = EmployeeId;
+SELECT I.InvoiceId, E.FirstName AS 'nombre agente', E.LastName AS 'apellido agente' FROM invoices I
+LEFT JOIN customers C ON I.CustomerId = C.CustomerId
+LEFT JOIN employees E ON C.SupportRepId = E.EmployeeId;
+# Para mostrar en una sola columna nombre + apellido: 
+SELECT I.InvoiceId, 
+       E.FirstName || ' ' || E.LastName AS 'agente'
+FROM invoices I
+LEFT JOIN customers C ON I.CustomerId = C.CustomerId
+LEFT JOIN employees E ON C.SupportRepId = E.EmployeeId;
 
 3. 
-SELECT C.FirstName as 'nombre cliente', C.LastName as 'apellido cliente', C.Country as 'país cliente', E.FirstName as 'nombre agente', E.LastName as 'apellido agente', I.Total 
+SELECT C.FirstName AS 'nombre cliente', 
+       C.LastName AS 'apellido cliente', 
+       C.Country AS 'país cliente', 
+       E.FirstName AS 'nombre agente', 
+       E.LastName AS 'apellido agente', 
+       SUM(I.Total) AS 'total facturado'
 FROM invoices I
-LEFT JOIN customers C on I.CustomerId = C.CustomerId
-LEFT JOIN employees E on C.SupportRepId = EmployeeId;
+LEFT JOIN customers C ON I.CustomerId = C.CustomerId
+LEFT JOIN employees E ON C.SupportRepId = E.EmployeeId
+GROUP BY C.CustomerId;
 
 4. 
-SELECT I.InvoiceLineId as 'nº art.', I.InvoiceId as 'nº factura', T.Name as 'nombre canción' FROM invoice_items I
-LEFT JOIN tracks T on I.TrackId = T.TrackId;
+SELECT I.InvoiceLineId AS 'nº art.', I.InvoiceId AS 'nº factura', T.Name AS 'nombre canción' FROM invoice_items I
+LEFT JOIN tracks T ON I.TrackId = T.TrackId;
 
 5. 
-SELECT T.Name as 'track name', M.Name as 'format', A.Title as 'album', G.Name as 'genre'
-from tracks T 
-LEFT JOIN media_types M on T.MediaTypeId = M.MediaTypeId
-LEFT JOIN albums A on T.AlbumId = A.AlbumId
-LEFT JOIN genres G on T.GenreId = G.GenreId;
+SELECT T.Name AS 'track name', M.Name AS 'format', A.Title AS 'album', G.Name AS 'genre'
+FROM tracks T 
+LEFT JOIN media_types M ON T.MediaTypeId = M.MediaTypeId
+LEFT JOIN albums A ON T.AlbumId = A.AlbumId
+LEFT JOIN genres G ON T.GenreId = G.GenreId;
 
 6. 
 SELECT PlaylistId, Count(TrackId) FROM playlist_track
@@ -101,24 +132,24 @@ GROUP BY PlaylistId;
 7. 
 SELECT E.EmployeeId, E.LastName, E.FirstName, SUM(I.Total)
 FROM invoices I 
-LEFT JOIN customers C on I.CustomerId = C.CustomerId
-LEFT JOIN employees E on C.SupportRepId = E.EmployeeId
+LEFT JOIN customers C ON I.CustomerId = C.CustomerId
+LEFT JOIN employees E ON C.SupportRepId = E.EmployeeId
 GROUP BY E.EmployeeId;
 
 8. El agente de ventas que más ha vendido en 2009 es Steve Johnson (total ventas = 164.34). 
 SELECT E.EmployeeId, E.LastName, E.FirstName, SUM(I.Total)
 FROM invoices I 
-LEFT JOIN customers C on I.CustomerId = C.CustomerId
-LEFT JOIN employees E on C.SupportRepId = E.EmployeeId
+LEFT JOIN customers C ON I.CustomerId = C.CustomerId
+LEFT JOIN employees E ON C.SupportRepId = E.EmployeeId
 WHERE I.InvoiceDate LIKE '2009%'
 GROUP BY E.EmployeeId;
 
 9. 
-SELECT AR.Name as 'grupo', SUM(I.UnitPrice * I.Quantity) as 'total'
+SELECT AR.Name AS 'grupo', SUM(I.UnitPrice * I.Quantity) AS 'total'
 FROM invoice_items I
-LEFT JOIN tracks T on I.TrackId = T.TrackId
-LEFT JOIN albums A on T.AlbumId = A.AlbumId
-LEFT JOIN artists AR on A.ArtistId = AR.ArtistId
+LEFT JOIN tracks T ON I.TrackId = T.TrackId
+LEFT JOIN albums A ON T.AlbumId = A.AlbumId
+LEFT JOIN artists AR ON A.ArtistId = AR.ArtistId
 GROUP BY AR.ArtistId
 ORDER BY total DESC
 LIMIT 3;
